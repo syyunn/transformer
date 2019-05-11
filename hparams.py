@@ -10,17 +10,17 @@ class Hparams:
     # train
     # # files
     parser.add_argument('--train1', default='gigaword/segmented/train.article.bpe',
-                             help="article training segmented data")
+                        help="article training segmented data")
     parser.add_argument('--train2', default='gigaword/segmented/train.title.bpe',
-                             help="title training segmented data")
+                        help="title training segmented data")
     parser.add_argument('--eval1', default='gigaword/segmented/eval.article.bpe',
-                             help="article evaluation segmented data")
+                        help="article evaluation segmented data")
     parser.add_argument('--eval2', default='gigaword/segmented/eval.title.bpe',
-                             help="title evaluation segmented data")
+                        help="title evaluation segmented data")
     parser.add_argument('--eval3', default='gigaword/prepro/eval.article',
-                             help="article evaluation unsegmented data")
+                        help="article evaluation unsegmented data")
 
-    ## vocabulary
+    # # vocabulary
     parser.add_argument('--vocab', default='gigaword/segmented/bpe.vocab',
                         help="vocabulary file path")
 
