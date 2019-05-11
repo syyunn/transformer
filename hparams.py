@@ -1,5 +1,6 @@
 import argparse
 
+
 class Hparams:
     parser = argparse.ArgumentParser()
 
@@ -7,20 +8,20 @@ class Hparams:
     parser.add_argument('--vocab_size', default=32000, type=int)
 
     # train
-    ## files
-    parser.add_argument('--train1', default='iwslt2016/segmented/train.de.bpe',
-                             help="german training segmented data")
-    parser.add_argument('--train2', default='iwslt2016/segmented/train.en.bpe',
-                             help="english training segmented data")
-    parser.add_argument('--eval1', default='iwslt2016/segmented/eval.de.bpe',
-                             help="german evaluation segmented data")
-    parser.add_argument('--eval2', default='iwslt2016/segmented/eval.en.bpe',
-                             help="english evaluation segmented data")
-    parser.add_argument('--eval3', default='iwslt2016/prepro/eval.en',
-                             help="english evaluation unsegmented data")
+    # # files
+    parser.add_argument('--train1', default='gigaword/segmented/train.article.bpe',
+                             help="article training segmented data")
+    parser.add_argument('--train2', default='gigaword/segmented/train.title.bpe',
+                             help="title training segmented data")
+    parser.add_argument('--eval1', default='gigaword/segmented/eval.article.bpe',
+                             help="article evaluation segmented data")
+    parser.add_argument('--eval2', default='gigaword/segmented/eval.title.bpe',
+                             help="title evaluation segmented data")
+    parser.add_argument('--eval3', default='gigaword/prepro/eval.article',
+                             help="article evaluation unsegmented data")
 
     ## vocabulary
-    parser.add_argument('--vocab', default='iwslt2016/segmented/bpe.vocab',
+    parser.add_argument('--vocab', default='gigaword/segmented/bpe.vocab',
                         help="vocabulary file path")
 
     # training scheme
@@ -51,10 +52,10 @@ class Hparams:
                         help="label smoothing rate")
 
     # test
-    parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
-                        help="german test segmented data")
-    parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
-                        help="english test data")
+    parser.add_argument('--test1', default='gigaword/segmented/eval.title.bpe',
+                        help="title test segmented data")
+    parser.add_argument('--test2', default='gigaword/prepro/eval.article',
+                        help="article test data")
     parser.add_argument('--ckpt', help="checkpoint file path")
     parser.add_argument('--test_batch_size', default=128, type=int)
     parser.add_argument('--testdir', default="test/1", help="test result dir")
