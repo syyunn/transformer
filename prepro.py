@@ -10,8 +10,9 @@ Preprocess the iwslt 2016 datasets.
 
 import os
 import errno
+import multiprocessing as mp
+from tqdm import tqdm
 import sentencepiece as spm
-import re
 from hparams import Hparams
 import logging
 
@@ -24,11 +25,10 @@ def prepro(hp):
     """
     logging.info("# Check if raw files exist")
 
-    train1 = "/Users/zachary/nlp/gigaword/train/train.article.txt"
-    train2 = "/Users/zachary/nlp/gigaword/train/train.title.txt"
-
-    eval1 = "/Users/zachary/nlp/gigaword/train/valid.article.filter.txt"
-    eval2 = "/Users/zachary/nlp/gigaword/train/valid.title.filter.txt"
+    train1 = "/Users/zachary/nlp/sumdata/train/train.article.txt"
+    train2 = "/Users/zachary/nlp/sumdata/train/train.title.txt"
+    eval1 = "/Users/zachary/nlp/sumdata/train/valid.article.filter.txt"
+    eval2 = "/Users/zachary/nlp/sumdata/train/valid.title.filter.txt"
 
     for f in (train1, train2, eval1, eval2):
         if not os.path.isfile(f):
@@ -37,77 +37,78 @@ def prepro(hp):
     logging.info("# Preprocessing")
     # train
     _prepro = lambda x:  [line.strip()
-                          for line in open(x, 'r').read().split("\n")
-                          if not line.startswith("<")]
+                          for line in open(x, 'r').read().split("\n")]
 
-    prepro_train1, prepro_train2 = _prepro(train1), _prepro(train2)
-    assert len(prepro_train1)==len(prepro_train2), "Check if train source and target files match."
-
-    # eval
-    _prepro = lambda x: [re.sub("<[^>]+>", "", line).strip() \
-                     for line in open(x, 'r').read().split("\n") \
-                     if line.startswith("<seg id")]
-    prepro_eval1, prepro_eval2 = _prepro(eval1), _prepro(eval2)
-    assert len(prepro_eval1) == len(prepro_eval2), "Check if eval source and target files match."
-
-    # test
-    prepro_test1, prepro_test2 = _prepro(test1), _prepro(test2)
-    assert len(prepro_test1) == len(prepro_test2), "Check if test source and target files match."
+    prepro_train1, prepro_train2, prepro_eval1, prepro_eval2 = \
+        _prepro(train1), _prepro(train2), _prepro(eval1), _prepro(eval2)
+    print(len(prepro_train1))
+    print(len(prepro_train2))
+    print(len(prepro_eval1))
+    print(len(prepro_eval2))
+    assert len(prepro_train1) == len(prepro_train2), "Check if train source and target files match."
+    assert len(prepro_eval1) == len(prepro_eval2), "Check if eval train source and eval target files match."
 
     logging.info("Let's see how preprocessed data look like")
-    logging.info("prepro_train1:", prepro_train1[0])
-    logging.info("prepro_train2:", prepro_train2[0])
-    logging.info("prepro_eval1:", prepro_eval1[0])
-    logging.info("prepro_eval2:", prepro_eval2[0])
-    logging.info("prepro_test1:", prepro_test1[0])
-    logging.info("prepro_test2:", prepro_test2[0])
+    logging.info("prepro_train1: {}".format(prepro_train1[0]))
+    logging.info("prepro_train2: {}".format(prepro_train2[0]))
+    logging.info("prepro_eval1: {}".format(prepro_eval1[0]))
+    logging.info("prepro_eval2: {}".format(prepro_eval2[0]))
 
-    logging.info("# write preprocessed files to disk")
-    os.makedirs("iwslt2016/prepro", exist_ok=True)
-
-    def _write(sents, fname):
-        with open(fname, 'w') as fout:
-            fout.write("\n".join(sents))
-
-    _write(prepro_train1, "iwslt2016/prepro/train.de")
-    _write(prepro_train2, "iwslt2016/prepro/train.en")
-    _write(prepro_train1+prepro_train2, "iwslt2016/prepro/train")
-    _write(prepro_eval1, "iwslt2016/prepro/eval.de")
-    _write(prepro_eval2, "iwslt2016/prepro/eval.en")
-    _write(prepro_test1, "iwslt2016/prepro/test.de")
-    _write(prepro_test2, "iwslt2016/prepro/test.en")
-
-    logging.info("# Train a joint BPE model with sentencepiece")
-    os.makedirs("iwslt2016/segmented", exist_ok=True)
-    train = '--input=iwslt2016/prepro/train --pad_id=0 --unk_id=1 \
-             --bos_id=2 --eos_id=3\
-             --model_prefix=iwslt2016/segmented/bpe --vocab_size={} \
-             --model_type=bpe'.format(hp.vocab_size)
-    spm.SentencePieceTrainer.Train(train)
+    # logging.info("# write preprocessed files to disk")
+    # os.makedirs("gigaword/prepro", exist_ok=True)
+    #
+    # def _write(sents, fname):
+    #     with open(fname, 'w') as fout:
+    #         fout.write("\n".join(sents))
+    #
+    # _write(prepro_train1, "gigaword/prepro/train.article")
+    # _write(prepro_train2, "gigaword/prepro/train.title")
+    # _write(prepro_train1+prepro_train2, "gigaword/prepro/train")  # this is to train sentencepiece
+    # _write(prepro_eval1, "gigaword/prepro/eval.article")
+    # _write(prepro_eval2, "gigaword/prepro/eval.title")
+    #
+    #
+    # logging.info("# Train a joint BPE model with sentencepiece")
+    # os.makedirs("gigaword/segmented", exist_ok=True)
+    # train = '--input=gigaword/prepro/train --pad_id=0 --unk_id=1 \
+    #          --bos_id=2 --eos_id=3\
+    #          --model_prefix=gigaword/segmented/bpe --vocab_size={} \
+    #          --model_type=bpe'.format(hp.vocab_size)
+    # spm.SentencePieceTrainer.Train(train)
 
     logging.info("# Load trained bpe model")
     sp = spm.SentencePieceProcessor()
-    sp.Load("iwslt2016/segmented/bpe.model")
+    sp.Load("gigaword/segmented/bpe.model")
 
     logging.info("# Segment")
+
     def _segment_and_write(sents, fname):
         with open(fname, "w") as fout:
-            for sent in sents:
+            for sent in tqdm(sents):
                 pieces = sp.EncodeAsPieces(sent)
                 fout.write(" ".join(pieces) + "\n")
 
-    _segment_and_write(prepro_train1, "iwslt2016/segmented/train.de.bpe")
-    _segment_and_write(prepro_train2, "iwslt2016/segmented/train.en.bpe")
-    _segment_and_write(prepro_eval1, "iwslt2016/segmented/eval.de.bpe")
-    _segment_and_write(prepro_eval2, "iwslt2016/segmented/eval.en.bpe")
-    _segment_and_write(prepro_test1, "iwslt2016/segmented/test.de.bpe")
+    # def _mp_segment_and_write(sents, fname):
+    #     # multi-processing
+    #     pool = mp.Pool(mp.cpu_count())
+    #     pieces_collection = [pool.apply(sp.EncodeAsPieces, args=sent) for sent in sents]
+    #     pool.close()
+    #
+    #     with open(fname, "w") as fout:
+    #         for pieces in pieces_collection:
+    #             fout.write(" ".join(pieces) + "\n")
+
+    _segment_and_write(prepro_train1, "gigaword/segmented/train.article.bpe")
+    _segment_and_write(prepro_train2, "gigaword/segmented/train.title.bpe")
+    _segment_and_write(prepro_eval1, "gigaword/segmented/eval.article.bpe")
+    _segment_and_write(prepro_eval2, "gigaword/segmented/eval.title.bpe")
 
     logging.info("Let's see how segmented data look like")
-    print("train1:", open("iwslt2016/segmented/train.de.bpe",'r').readline())
-    print("train2:", open("iwslt2016/segmented/train.en.bpe", 'r').readline())
-    print("eval1:", open("iwslt2016/segmented/eval.de.bpe", 'r').readline())
-    print("eval2:", open("iwslt2016/segmented/eval.en.bpe", 'r').readline())
-    print("test1:", open("iwslt2016/segmented/test.de.bpe", 'r').readline())
+    print("train1:", open("gigaword/segmented/train.article.bpe", 'r').readline())
+    print("train2:", open("gigaword/segmented/train.title.bpe", 'r').readline())
+    print("eval1:", open("gigaword/segmented/eval.article.bpe", 'r').readline())
+    print("eval2:", open("gigaword/segmented/eval.title.bpe", 'r').readline())
+
 
 if __name__ == '__main__':
     hparams = Hparams()
