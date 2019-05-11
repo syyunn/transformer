@@ -17,25 +17,29 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+
 def prepro(hp):
     """Load raw data -> Preprocessing -> Segmenting with sentencepice
     hp: hyperparams. argparse.
     """
     logging.info("# Check if raw files exist")
-    train1 = "iwslt2016/de-en/train.tags.de-en.de"
-    train2 = "iwslt2016/de-en/train.tags.de-en.en"
-    eval1 = "iwslt2016/de-en/IWSLT16.TED.tst2013.de-en.de.xml"
-    eval2 = "iwslt2016/de-en/IWSLT16.TED.tst2013.de-en.en.xml"
-    test1 = "iwslt2016/de-en/IWSLT16.TED.tst2014.de-en.de.xml"
-    test2 = "iwslt2016/de-en/IWSLT16.TED.tst2014.de-en.en.xml"
-    for f in (train1, train2, eval1, eval2, test1, test2):
+
+    train1 = "/Users/zachary/nlp/gigaword/train/train.article.txt"
+    train2 = "/Users/zachary/nlp/gigaword/train/train.title.txt"
+
+    eval1 = "/Users/zachary/nlp/gigaword/train/valid.article.filter.txt"
+    eval2 = "/Users/zachary/nlp/gigaword/train/valid.title.filter.txt"
+
+    for f in (train1, train2, eval1, eval2):
         if not os.path.isfile(f):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f)
 
     logging.info("# Preprocessing")
     # train
-    _prepro = lambda x:  [line.strip() for line in open(x, 'r').read().split("\n") \
-                      if not line.startswith("<")]
+    _prepro = lambda x:  [line.strip()
+                          for line in open(x, 'r').read().split("\n")
+                          if not line.startswith("<")]
+
     prepro_train1, prepro_train2 = _prepro(train1), _prepro(train2)
     assert len(prepro_train1)==len(prepro_train2), "Check if train source and target files match."
 
@@ -60,6 +64,7 @@ def prepro(hp):
 
     logging.info("# write preprocessed files to disk")
     os.makedirs("iwslt2016/prepro", exist_ok=True)
+
     def _write(sents, fname):
         with open(fname, 'w') as fout:
             fout.write("\n".join(sents))
