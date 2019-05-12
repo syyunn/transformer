@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 #/usr/bin/python3
+
 '''
 Feb. 2019 by kyubyong park.
 kbpark.linguist@gmail.com.
 https://www.github.com/kyubyong/transformer
 '''
+
+"""
+Edited by Zachary to perform text compression
+"""
+
 import tensorflow as tf
+
+from tensorflow.python.client import device_lib
+# print(device_lib.list_local_devices())
 
 from model import Transformer
 from tqdm import tqdm
@@ -26,17 +35,25 @@ hp = parser.parse_args()
 save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
-train_batches, num_train_batches, num_train_samples = get_batch(hp.train1, hp.train2,
-                                             hp.maxlen1, hp.maxlen2,
-                                             hp.vocab, hp.batch_size,
-                                             shuffle=True)
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval1, hp.eval2,
-                                             100000, 100000,
-                                             hp.vocab, hp.batch_size,
-                                             shuffle=False)
+train_batches, num_train_batches, num_train_samples = get_batch(hp.train1,
+                                                                hp.train2,
+                                                                hp.maxlen1,
+                                                                hp.maxlen2,
+                                                                hp.vocab,
+                                                                hp.batch_size,
+                                                                shuffle=True)
+
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval1,
+                                                             hp.eval2,
+                                                             100000,
+                                                             100000,
+                                                             hp.vocab,
+                                                             hp.batch_size,
+                                                             shuffle=False)
 
 # create a iterator of the correct shape and type
-iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
+iter = tf.data.Iterator.from_structure(train_batches.output_types,
+                                       train_batches.output_shapes)
 xs, ys = iter.get_next()
 
 train_init_op = iter.make_initializer(train_batches)
@@ -50,7 +67,7 @@ y_hat, eval_summaries = m.eval(xs, ys)
 
 logging.info("# Session")
 saver = tf.train.Saver(max_to_keep=hp.num_epochs)
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     ckpt = tf.train.latest_checkpoint(hp.logdir)
     if ckpt is None:
         logging.info("Initializing from scratch")
@@ -81,7 +98,7 @@ with tf.Session() as sess:
             hypotheses = get_hypotheses(num_eval_batches, num_eval_samples, sess, y_hat, m.idx2token)
 
             logging.info("# write results")
-            model_output = "iwslt2016_E%02dL%.2f" % (epoch, _loss)
+            model_output = "gigaword_E%02dL%.2f" % (epoch, _loss)
             if not os.path.exists(hp.evaldir): os.makedirs(hp.evaldir)
             translation = os.path.join(hp.evaldir, model_output)
             with open(translation, 'w') as fout:
@@ -101,3 +118,6 @@ with tf.Session() as sess:
 
 
 logging.info("Done")
+
+if __name__ == "__main__":
+    pass

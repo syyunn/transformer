@@ -89,6 +89,7 @@ def generator_fn(sents1, sents2, vocab_fpath):
         x_seqlen, y_seqlen = len(x), len(y)
         yield (x, x_seqlen, sent1), (decoder_input, y, y_seqlen, sent2)
 
+
 def input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
     '''Batchify data
     sents1: list of source sents
@@ -129,7 +130,15 @@ def input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
 
     return dataset
 
-def get_batch(fpath1, fpath2, maxlen1, maxlen2, vocab_fpath, batch_size, shuffle=False):
+
+def get_batch(fpath1,
+              fpath2,
+              maxlen1,
+              maxlen2,
+              vocab_fpath,
+              batch_size,
+              shuffle=False):
+
     '''Gets training / evaluation mini-batches
     fpath1: source file path. string.
     fpath2: target file path. string.
@@ -144,6 +153,7 @@ def get_batch(fpath1, fpath2, maxlen1, maxlen2, vocab_fpath, batch_size, shuffle
     num_batches: number of mini-batches
     num_samples
     '''
+
     sents1, sents2 = load_data(fpath1, fpath2, maxlen1, maxlen2)
     batches = input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=shuffle)
     num_batches = calc_num_batches(len(sents1), batch_size)

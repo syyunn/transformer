@@ -25,10 +25,10 @@ def prepro(hp):
     """
     logging.info("# Check if raw files exist")
 
-    train1 = "/Users/zachary/nlp/sumdata/train/train.article.txt"
-    train2 = "/Users/zachary/nlp/sumdata/train/train.title.txt"
-    eval1 = "/Users/zachary/nlp/sumdata/train/valid.article.filter.txt"
-    eval2 = "/Users/zachary/nlp/sumdata/train/valid.title.filter.txt"
+    train1 = "/home/zachary/hdd/nlp/sumdata/train/train.article.txt"
+    train2 = "/home/zachary/hdd/nlp/sumdata/train/train.title.txt"
+    eval1 = "/home/zachary/hdd/nlp/sumdata/train/valid.article.filter.txt"
+    eval2 = "/home/zachary/hdd/nlp/sumdata/train/valid.title.filter.txt"
 
     for f in (train1, train2, eval1, eval2):
         if not os.path.isfile(f):
@@ -54,27 +54,26 @@ def prepro(hp):
     logging.info("prepro_eval1: {}".format(prepro_eval1[0]))
     logging.info("prepro_eval2: {}".format(prepro_eval2[0]))
 
-    # logging.info("# write preprocessed files to disk")
-    # os.makedirs("gigaword/prepro", exist_ok=True)
-    #
-    # def _write(sents, fname):
-    #     with open(fname, 'w') as fout:
-    #         fout.write("\n".join(sents))
-    #
-    # _write(prepro_train1, "gigaword/prepro/train.article")
-    # _write(prepro_train2, "gigaword/prepro/train.title")
-    # _write(prepro_train1+prepro_train2, "gigaword/prepro/train")  # this is to train sentencepiece
-    # _write(prepro_eval1, "gigaword/prepro/eval.article")
-    # _write(prepro_eval2, "gigaword/prepro/eval.title")
-    #
-    #
-    # logging.info("# Train a joint BPE model with sentencepiece")
-    # os.makedirs("gigaword/segmented", exist_ok=True)
-    # train = '--input=gigaword/prepro/train --pad_id=0 --unk_id=1 \
-    #          --bos_id=2 --eos_id=3\
-    #          --model_prefix=gigaword/segmented/bpe --vocab_size={} \
-    #          --model_type=bpe'.format(hp.vocab_size)
-    # spm.SentencePieceTrainer.Train(train)
+    logging.info("# write preprocessed files to disk")
+    os.makedirs("gigaword/prepro", exist_ok=True)
+
+    def _write(sents, fname):
+        with open(fname, 'w') as fout:
+            fout.write("\n".join(sents))
+
+    _write(prepro_train1, "gigaword/prepro/train.article")
+    _write(prepro_train2, "gigaword/prepro/train.title")
+    _write(prepro_train1+prepro_train2, "gigaword/prepro/train")  # this is to train sentencepiece
+    _write(prepro_eval1, "gigaword/prepro/eval.article")
+    _write(prepro_eval2, "gigaword/prepro/eval.title")
+
+    logging.info("# Train a joint BPE model with sentencepiece")
+    os.makedirs("gigaword/segmented", exist_ok=True)
+    train = '--input=gigaword/prepro/train --pad_id=0 --unk_id=1 \
+             --bos_id=2 --eos_id=3\
+             --model_prefix=gigaword/segmented/bpe --vocab_size={} \
+             --model_type=bpe'.format(hp.vocab_size)
+    spm.SentencePieceTrainer.Train(train)
 
     logging.info("# Load trained bpe model")
     sp = spm.SentencePieceProcessor()
@@ -87,16 +86,6 @@ def prepro(hp):
             for sent in tqdm(sents):
                 pieces = sp.EncodeAsPieces(sent)
                 fout.write(" ".join(pieces) + "\n")
-
-    # def _mp_segment_and_write(sents, fname):
-    #     # multi-processing
-    #     pool = mp.Pool(mp.cpu_count())
-    #     pieces_collection = [pool.apply(sp.EncodeAsPieces, args=sent) for sent in sents]
-    #     pool.close()
-    #
-    #     with open(fname, "w") as fout:
-    #         for pieces in pieces_collection:
-    #             fout.write(" ".join(pieces) + "\n")
 
     _segment_and_write(prepro_train1, "gigaword/segmented/train.article.bpe")
     _segment_and_write(prepro_train2, "gigaword/segmented/train.title.bpe")
